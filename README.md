@@ -1,0 +1,2 @@
+# optimized-dilithium
+尝试使用neon以及并行指令优化dilithium算法速度
