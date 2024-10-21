@@ -1,6 +1,6 @@
 #include <memory.h>
 #include <arm_neon.h>
-#include "ntt.hpp"
+#include "ntt_xw.h"
 #define Q 8380417           // Q
 #define Q_INV 58728449      // Q 逆
 #define MONT 2365951        // R = 2^32 R^2 MOD Q = 2365951

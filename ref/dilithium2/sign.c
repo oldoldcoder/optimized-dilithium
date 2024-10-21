@@ -41,6 +41,7 @@ int crypto_sign_keypair(uint8_t *pk, uint8_t *sk) {
   polyvec_matrix_expand(mat, rho);
 
   /* Sample short vectors s1 and s2 */
+
   polyvecl_uniform_eta(&s1, rhoprime, 0);
   polyveck_uniform_eta(&s2, rhoprime, L);
 

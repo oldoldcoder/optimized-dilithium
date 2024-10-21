@@ -27,13 +27,13 @@ void polyvecl_add(polyvecl *w, const polyvecl *u, const polyvecl *v);
 void polyvecl_ntt(polyvecl *v);
 #define polyvecl_invntt_tomont DILITHIUM_NAMESPACE(polyvecl_invntt_tomont)
 void polyvecl_invntt_tomont(polyvecl *v);
-#define polyvecl_pointwise_poly_montgomery DILITHIUM_NAMESPACE(polyvecl_pointwise_poly_montgomery)
-void polyvecl_pointwise_poly_montgomery(polyvecl *r, const poly *a, const polyvecl *v);
-#define polyvecl_pointwise_acc_montgomery \
-        DILITHIUM_NAMESPACE(polyvecl_pointwise_acc_montgomery)
-void polyvecl_pointwise_acc_montgomery(poly *w,
-                                       const polyvecl *u,
-                                       const polyvecl *v);
+//#define polyvecl_pointwise_poly_montgomery DILITHIUM_NAMESPACE(polyvecl_pointwise_poly_montgomery)
+//void polyvecl_pointwise_poly_montgomery(polyvecl *r, const poly *a, const polyvecl *v);
+//#define polyvecl_pointwise_acc_montgomery \
+//        DILITHIUM_NAMESPACE(polyvecl_pointwise_acc_montgomery)
+//void polyvecl_pointwise_acc_montgomery(poly *w,
+//                                       const polyvecl *u,
+//                                       const polyvecl *v);
 
 
 #define polyvecl_chknorm DILITHIUM_NAMESPACE(polyvecl_chknorm)
@@ -51,8 +51,8 @@ void polyveck_uniform_eta(polyveck *v, const uint8_t seed[CRHBYTES], uint16_t no
 
 #define polyveck_reduce DILITHIUM_NAMESPACE(polyveck_reduce)
 void polyveck_reduce(polyveck *v);
-#define polyveck_caddq DILITHIUM_NAMESPACE(polyveck_caddq)
-void polyveck_caddq(polyveck *v);
+//#define polyveck_caddq DILITHIUM_NAMESPACE(polyveck_caddq)
+//void polyveck_caddq(polyveck *v);
 
 #define polyveck_add DILITHIUM_NAMESPACE(polyveck_add)
 void polyveck_add(polyveck *w, const polyveck *u, const polyveck *v);
@@ -65,8 +65,8 @@ void polyveck_shiftl(polyveck *v);
 void polyveck_ntt(polyveck *v);
 #define polyveck_invntt_tomont DILITHIUM_NAMESPACE(polyveck_invntt_tomont)
 void polyveck_invntt_tomont(polyveck *v);
-#define polyveck_pointwise_poly_montgomery DILITHIUM_NAMESPACE(polyveck_pointwise_poly_montgomery)
-void polyveck_pointwise_poly_montgomery(polyveck *r, const poly *a, const polyveck *v);
+//#define polyveck_pointwise_poly_montgomery DILITHIUM_NAMESPACE(polyveck_pointwise_poly_montgomery)
+//void polyveck_pointwise_poly_montgomery(polyveck *r, const poly *a, const polyveck *v);
 
 #define polyveck_chknorm DILITHIUM_NAMESPACE(polyveck_chknorm)
 int polyveck_chknorm(const polyveck *v, int32_t B);

@@ -2,6 +2,9 @@
 #include "params.h"
 #include "ntt.h"
 #include "reduce.h"
+#include "barrett_mul.h"
+
+#define BT_MUL 1
 
 static const int32_t zetas[N] = {
          0,    25847, -2608894,  -518909,   237124,  -777960,  -876248,   466468,
@@ -55,7 +58,12 @@ void ntt(int32_t a[N]) {
     for(start = 0; start < N; start = j + len) {
       zeta = zetas[++k];
       for(j = start; j < start + len; ++j) {
+#if BT_MUL
+          // 现在就已经脱离了蒙哥马利域了
+        t = barrett_mul3(zeta,a[j + len]);
+#else
         t = montgomery_reduce((int64_t)zeta * a[j + len]);
+#endif
         a[j + len] = a[j] - t;
         a[j] = a[j] + t;
       }
@@ -87,12 +95,20 @@ void invntt_tomont(int32_t a[N]) {
         t = a[j];
         a[j] = t + a[j + len];
         a[j + len] = t - a[j + len];
+#if BT_MUL
+        a[j + len] = barrett_mul3(zeta,a[j + len]);
+#else
         a[j + len] = montgomery_reduce((int64_t)zeta * a[j + len]);
+#endif
       }
     }
   }
 
   for(j = 0; j < N; ++j) {
-    a[j] = montgomery_reduce((int64_t)f * a[j]);
+#if BT_MUL
+      a[j] = barrett_mul3((int64_t)f,a[j]);
+#else
+      a[j] = montgomery_reduce((int64_t)f * a[j]);
+#endif
   }
 }

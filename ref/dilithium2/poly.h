@@ -11,8 +11,8 @@ typedef struct {
 
 #define poly_reduce DILITHIUM_NAMESPACE(poly_reduce)
 void poly_reduce(poly *a);
-#define poly_caddq DILITHIUM_NAMESPACE(poly_caddq)
-void poly_caddq(poly *a);
+//#define poly_caddq DILITHIUM_NAMESPACE(poly_caddq)
+//void poly_caddq(poly *a);
 
 #define poly_add DILITHIUM_NAMESPACE(poly_add)
 void poly_add(poly *c, const poly *a, const poly *b);
@@ -25,8 +25,8 @@ void poly_shiftl(poly *a);
 void poly_ntt(poly *a);
 #define poly_invntt_tomont DILITHIUM_NAMESPACE(poly_invntt_tomont)
 void poly_invntt_tomont(poly *a);
-#define poly_pointwise_montgomery DILITHIUM_NAMESPACE(poly_pointwise_montgomery)
-void poly_pointwise_montgomery(poly *c, const poly *a, const poly *b);
+//#define poly_pointwise_montgomery DILITHIUM_NAMESPACE(poly_pointwise_montgomery)
+//void poly_pointwise_montgomery(poly *c, const poly *a, const poly *b);
 
 #define poly_power2round DILITHIUM_NAMESPACE(poly_power2round)
 void poly_power2round(poly *a1, poly *a0, const poly *a);
@@ -43,14 +43,27 @@ int poly_chknorm(const poly *a, int32_t B);
 void poly_uniform(poly *a,
                   const uint8_t seed[SEEDBYTES],
                   uint16_t nonce);
+#define poly_uniformx2 DILITHIUM_NAMESPACE(poly_uniformx2)
+void poly_uniformx2(poly *a0, poly *a1,
+                    const uint8_t seed[SEEDBYTES],
+                    uint16_t nonce0, uint16_t nonce1);
 #define poly_uniform_eta DILITHIUM_NAMESPACE(poly_uniform_eta)
 void poly_uniform_eta(poly *a,
                       const uint8_t seed[CRHBYTES],
                       uint16_t nonce);
+#define poly_uniform_etax2 DILITHIUM_NAMESPACE(poly_uniform_etax2)
+void poly_uniform_etax2(poly *a0, poly *a1,
+                        const uint8_t seed[CRHBYTES],
+                        uint16_t nonce0, uint16_t nonce1);
 #define poly_uniform_gamma1 DILITHIUM_NAMESPACE(poly_uniform_gamma1)
 void poly_uniform_gamma1(poly *a,
                          const uint8_t seed[CRHBYTES],
                          uint16_t nonce);
+#define poly_uniform_gamma1x2 DILITHIUM_NAMESPACE(poly_uniform_gamma1x2)
+void poly_uniform_gamma1x2(poly *a0, poly *a1,
+                           const uint8_t seed[CRHBYTES],
+                           uint16_t nonce0, uint16_t nonce1);
+
 #define poly_challenge DILITHIUM_NAMESPACE(poly_challenge)
 void poly_challenge(poly *c, const uint8_t seed[CTILDEBYTES]);
 

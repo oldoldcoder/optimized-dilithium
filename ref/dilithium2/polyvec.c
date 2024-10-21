@@ -2,7 +2,10 @@
 #include "params.h"
 #include "polyvec.h"
 #include "poly.h"
+#include "hal.h"
+#include "stdio.h"
 
+// #define X2 1
 /*************************************************
 * Name:        expand_mat
 *
@@ -16,11 +19,29 @@
 void polyvec_matrix_expand(polyvecl mat[K], const uint8_t rho[SEEDBYTES]) {
   unsigned int i, j;
 
+#if X2
+    uint64_t start = hal_get_time();
+    for(i = 0; i < K; ++i)
+        for(j = 0; j < L; j+=2){
+            poly_uniformx2(&mat[i].vec[j],&mat[i].vec[j + 1], rho, (i << 8) + j,(i << 8) + (j + 1));
+        }
+    uint64_t end = hal_get_time();
+    uint64_t res = end - start;
+    printf("\n poly_uniformx2: %ld",res);
+    fflush(stdout);
+#else
+    uint64_t start = hal_get_time();
   for(i = 0; i < K; ++i)
     for(j = 0; j < L; ++j)
       poly_uniform(&mat[i].vec[j], rho, (i << 8) + j);
-}
+    uint64_t end = hal_get_time();
+    uint64_t res = end - start;
+    printf("\n poly_uniformx2: %ld",res);
+    fflush(stdout);
+#endif
 
+}
+// montgomery
 void polyvec_matrix_pointwise_montgomery(polyveck *t, const polyvecl mat[K], const polyvecl *v) {
   unsigned int i;
 
@@ -35,15 +56,53 @@ void polyvec_matrix_pointwise_montgomery(polyveck *t, const polyvecl mat[K], con
 void polyvecl_uniform_eta(polyvecl *v, const uint8_t seed[CRHBYTES], uint16_t nonce) {
   unsigned int i;
 
-  for(i = 0; i < L; ++i)
-    poly_uniform_eta(&v->vec[i], seed, nonce++);
+#if X2
+    // TODO 统计时间
+    uint64_t start = hal_get_time();
+    for(i = 0; i < L; i+=2){
+        poly_uniform_etax2(&v->vec[i],&v->vec[i+1], seed, nonce,nonce+1);
+        nonce += 2;
+    }
+    uint64_t end = hal_get_time();
+    uint64_t res = end - start;
+    printf("\n poly_uniform_etax2: %ld",res);
+    fflush(stdout);
+#else
+    uint64_t start = hal_get_time();
+    for(i = 0; i < L; i+=2){
+        poly_uniform_eta(&v->vec[i], seed, nonce++);
+    }
+    uint64_t end = hal_get_time();
+    uint64_t res = end - start;
+    printf("\n poly_uniform_etax2: %ld",res);
+    fflush(stdout);
+#endif
 }
 
 void polyvecl_uniform_gamma1(polyvecl *v, const uint8_t seed[CRHBYTES], uint16_t nonce) {
   unsigned int i;
 
-  for(i = 0; i < L; ++i)
-    poly_uniform_gamma1(&v->vec[i], seed, L*nonce + i);
+#if X2
+    // TODO 统计时间
+    uint64_t start = hal_get_time();
+    for(i = 0; i < L; i+=2){
+        poly_uniform_gamma1x2(&v->vec[i],&v->vec[i+1], seed, nonce,nonce+1);
+        nonce += 2;
+    }
+    uint64_t end = hal_get_time();
+    uint64_t res = end - start;
+    printf("\n poly_uniform_gamma1x2: %ld",res);
+    fflush(stdout);
+#else
+    uint64_t start = hal_get_time();
+    for(i = 0; i < L; ++i)
+        poly_uniform_gamma1(&v->vec[i], seed, L*nonce + i);
+    uint64_t end = hal_get_time();
+    uint64_t res = end - start;
+    printf("\n poly_uniform_gamma1x2: %ld",res);
+    fflush(stdout);
+#endif
+
 }
 
 void polyvecl_reduce(polyvecl *v) {
@@ -92,12 +151,12 @@ void polyvecl_invntt_tomont(polyvecl *v) {
     poly_invntt_tomont(&v->vec[i]);
 }
 
-void polyvecl_pointwise_poly_montgomery(polyvecl *r, const poly *a, const polyvecl *v) {
-  unsigned int i;
-
-  for(i = 0; i < L; ++i)
-    poly_pointwise_montgomery(&r->vec[i], a, &v->vec[i]);
-}
+//void polyvecl_pointwise_poly_montgomery(polyvecl *r, const poly *a, const polyvecl *v) {
+//  unsigned int i;
+//
+//  for(i = 0; i < L; ++i)
+//    poly_pointwise_montgomery(&r->vec[i], a, &v->vec[i]);
+//}
 
 /*************************************************
 * Name:        polyvecl_pointwise_acc_montgomery
@@ -110,19 +169,19 @@ void polyvecl_pointwise_poly_montgomery(polyvecl *r, const poly *a, const polyve
 *              - const polyvecl *u: pointer to first input vector
 *              - const polyvecl *v: pointer to second input vector
 **************************************************/
-void polyvecl_pointwise_acc_montgomery(poly *w,
-                                       const polyvecl *u,
-                                       const polyvecl *v)
-{
-  unsigned int i;
-  poly t;
-
-  poly_pointwise_montgomery(w, &u->vec[0], &v->vec[0]);
-  for(i = 1; i < L; ++i) {
-    poly_pointwise_montgomery(&t, &u->vec[i], &v->vec[i]);
-    poly_add(w, w, &t);
-  }
-}
+//void polyvecl_pointwise_acc_montgomery(poly *w,
+//                                       const polyvecl *u,
+//                                       const polyvecl *v)
+//{
+//  unsigned int i;
+//  poly t;
+//
+//  poly_pointwise_montgomery(w, &u->vec[0], &v->vec[0]);
+//  for(i = 1; i < L; ++i) {
+//    poly_pointwise_montgomery(&t, &u->vec[i], &v->vec[i]);
+//    poly_add(w, w, &t);
+//  }
+//}
 
 /*************************************************
 * Name:        polyvecl_chknorm
@@ -153,8 +212,27 @@ int polyvecl_chknorm(const polyvecl *v, int32_t bound)  {
 void polyveck_uniform_eta(polyveck *v, const uint8_t seed[CRHBYTES], uint16_t nonce) {
   unsigned int i;
 
-  for(i = 0; i < K; ++i)
-    poly_uniform_eta(&v->vec[i], seed, nonce++);
+#if X2
+    // TODO 统计时间
+    uint64_t start = hal_get_time();
+    for(i = 0; i < K; i+=2){
+        poly_uniform_etax2(&v->vec[i],&v->vec[i+1], seed, nonce,nonce+1);
+        nonce += 2;
+    }
+    uint64_t end = hal_get_time();
+    uint64_t res = end - start;
+    printf("\n poly_uniform_etax2: %ld",res);
+    fflush(stdout);
+#else
+    uint64_t start = hal_get_time();
+    for(i = 0; i < K; i+=2){
+        poly_uniform_eta(&v->vec[i], seed, nonce++);
+    }
+    uint64_t end = hal_get_time();
+    uint64_t res = end - start;
+    printf("\n poly_uniform_etax2: %ld",res);
+    fflush(stdout);
+#endif
 }
 
 /*************************************************
@@ -165,12 +243,12 @@ void polyveck_uniform_eta(polyveck *v, const uint8_t seed[CRHBYTES], uint16_t no
 *
 * Arguments:   - polyveck *v: pointer to input/output vector
 **************************************************/
-void polyveck_reduce(polyveck *v) {
-  unsigned int i;
-
-  for(i = 0; i < K; ++i)
-    poly_reduce(&v->vec[i]);
-}
+//void polyveck_reduce(polyveck *v) {
+//  unsigned int i;
+//
+//  for(i = 0; i < K; ++i)
+//    poly_reduce(&v->vec[i]);
+//}
 
 /*************************************************
 * Name:        polyveck_caddq
@@ -180,12 +258,12 @@ void polyveck_reduce(polyveck *v) {
 *
 * Arguments:   - polyveck *v: pointer to input/output vector
 **************************************************/
-void polyveck_caddq(polyveck *v) {
-  unsigned int i;
-
-  for(i = 0; i < K; ++i)
-    poly_caddq(&v->vec[i]);
-}
+//void polyveck_caddq(polyveck *v) {
+//  unsigned int i;
+//
+//  for(i = 0; i < K; ++i)
+//    poly_caddq(&v->vec[i]);
+//}
 
 /*************************************************
 * Name:        polyveck_add
@@ -268,12 +346,12 @@ void polyveck_invntt_tomont(polyveck *v) {
     poly_invntt_tomont(&v->vec[i]);
 }
 
-void polyveck_pointwise_poly_montgomery(polyveck *r, const poly *a, const polyveck *v) {
-  unsigned int i;
-
-  for(i = 0; i < K; ++i)
-    poly_pointwise_montgomery(&r->vec[i], a, &v->vec[i]);
-}
+//void polyveck_pointwise_poly_montgomery(polyveck *r, const poly *a, const polyveck *v) {
+//  unsigned int i;
+//
+//  for(i = 0; i < K; ++i)
+//    poly_pointwise_montgomery(&r->vec[i], a, &v->vec[i]);
+//}
 
 
 /*************************************************

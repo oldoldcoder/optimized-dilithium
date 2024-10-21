@@ -5,6 +5,11 @@
 #include "reduce.h"
 #include "rounding.h"
 #include "symmetric.h"
+#include "hal.h"
+#include "stdio.h"
+#include "ntt_xw.h"
+#include "fips202x2.h"
+
 
 #ifdef DBENCH
 #include "test/cpucycles.h"
@@ -25,15 +30,15 @@ extern uint64_t *tred, *tadd, *tmul, *tround, *tsample, *tpack;
 *
 * Arguments:   - poly *a: pointer to input/output polynomial
 **************************************************/
-void poly_reduce(poly *a) {
-  unsigned int i;
-  DBENCH_START();
-
-  for(i = 0; i < N; ++i)
-    a->coeffs[i] = reduce32(a->coeffs[i]);
-
-  DBENCH_STOP(*tred);
-}
+//void poly_reduce(poly *a) {
+//  unsigned int i;
+//  DBENCH_START();
+//
+//  for(i = 0; i < N; ++i)
+//    a->coeffs[i] = reduce32(a->coeffs[i]);
+//
+//  DBENCH_STOP(*tred);
+//}
 
 /*************************************************
 * Name:        poly_caddq
@@ -43,15 +48,15 @@ void poly_reduce(poly *a) {
 *
 * Arguments:   - poly *a: pointer to input/output polynomial
 **************************************************/
-void poly_caddq(poly *a) {
-  unsigned int i;
-  DBENCH_START();
-
-  for(i = 0; i < N; ++i)
-    a->coeffs[i] = caddq(a->coeffs[i]);
-
-  DBENCH_STOP(*tred);
-}
+//void poly_caddq(poly *a) {
+//  unsigned int i;
+//  DBENCH_START();
+//
+//  for(i = 0; i < N; ++i)
+//    a->coeffs[i] = caddq(a->coeffs[i]);
+//
+//  DBENCH_STOP(*tred);
+//}
 
 /*************************************************
 * Name:        poly_add
@@ -121,8 +126,27 @@ void poly_shiftl(poly *a) {
 **************************************************/
 void poly_ntt(poly *a) {
   DBENCH_START();
-
-  ntt(a->coeffs);
+//    uint64_t start_cycles = hal_get_time();
+    ntt(a->coeffs);
+    // 方法执行后读取周期计数
+//    uint64_t end_cycles = hal_get_time();
+//    // 计算消耗的周期数
+//    uint64_t cycles_used = end_cycles - start_cycles;
+//    printf("ref-ntt Method used %lu CPU cycles\n", cycles_used);
+//    fflush(stdout);
+//    uint64_t start_cycles = hal_get_time();
+//    for(int i = 0 ; i < N ; ++i) {
+//        printf("%d,",a->coeffs[i]);
+//    }
+//    printf("\n");
+//    fflush(stdout);
+//    NTT(a->coeffs);
+//    // 方法执行后读取周期计数
+//    uint64_t end_cycles = hal_get_time();
+//    // 计算消耗的周期数
+//    uint64_t cycles_used = end_cycles - start_cycles;
+//    printf("xw-ntt Method used %lu CPU cycles\n", cycles_used);
+//    fflush(stdout);
 
   DBENCH_STOP(*tmul);
 }
@@ -155,15 +179,15 @@ void poly_invntt_tomont(poly *a) {
 *              - const poly *a: pointer to first input polynomial
 *              - const poly *b: pointer to second input polynomial
 **************************************************/
-void poly_pointwise_montgomery(poly *c, const poly *a, const poly *b) {
-  unsigned int i;
-  DBENCH_START();
-
-  for(i = 0; i < N; ++i)
-    c->coeffs[i] = montgomery_reduce((int64_t)a->coeffs[i] * b->coeffs[i]);
-
-  DBENCH_STOP(*tmul);
-}
+//void poly_pointwise_montgomery(poly *c, const poly *a, const poly *b) {
+//  unsigned int i;
+//  DBENCH_START();
+//
+//  for(i = 0; i < N; ++i)
+//    c->coeffs[i] = montgomery_reduce((int64_t)a->coeffs[i] * b->coeffs[i]);
+//
+//  DBENCH_STOP(*tmul);
+//}
 
 /*************************************************
 * Name:        poly_power2round
@@ -367,6 +391,28 @@ void poly_uniform(poly *a,
   }
 }
 
+void poly_uniformx2(poly *a0, poly *a1,
+                    const uint8_t seed[SEEDBYTES],
+                    uint16_t nonce0, uint16_t nonce1) {
+    unsigned int ctr0, ctr1;
+    unsigned int buflen = POLY_UNIFORM_NBLOCKS * STREAM128_BLOCKBYTES;
+    uint8_t buf0[POLY_UNIFORM_NBLOCKS * STREAM128_BLOCKBYTES + 2];
+    uint8_t buf1[POLY_UNIFORM_NBLOCKS * STREAM128_BLOCKBYTES + 2];
+
+    keccakx2_state statex2;
+    dilithium_shake128x2_stream_init(&statex2, seed, nonce0, nonce1);
+    shake128x2_squeezeblocks(buf0, buf1, POLY_UNIFORM_NBLOCKS, &statex2);
+
+    ctr0 = rej_uniform(a0->coeffs, N, buf0, buflen);
+    ctr1 = rej_uniform(a1->coeffs, N, buf1, buflen);
+
+    while (ctr0 < N || ctr1 < N) {
+        shake128x2_squeezeblocks(buf0, buf1, 1, &statex2);
+        ctr0 += rej_uniform(a0->coeffs + ctr0, N - ctr0, buf0, buflen);
+        ctr1 += rej_uniform(a1->coeffs + ctr1, N - ctr1, buf1, buflen);
+    }
+
+}
 /*************************************************
 * Name:        rej_eta
 *
@@ -451,6 +497,29 @@ void poly_uniform_eta(poly *a,
     ctr += rej_eta(a->coeffs + ctr, N - ctr, buf, STREAM256_BLOCKBYTES);
   }
 }
+void poly_uniform_etax2(poly *a0, poly *a1,
+                        const uint8_t seed[CRHBYTES],
+                        uint16_t nonce0, uint16_t nonce1) {
+    unsigned int ctr0, ctr1;
+    unsigned int buflen = POLY_UNIFORM_ETA_NBLOCKS * STREAM256_BLOCKBYTES;
+
+    uint8_t buf0[POLY_UNIFORM_ETA_NBLOCKS * STREAM256_BLOCKBYTES];
+    uint8_t buf1[POLY_UNIFORM_ETA_NBLOCKS * STREAM256_BLOCKBYTES];
+
+    keccakx2_state statex2;
+
+    dilithium_shake256x2_stream_init(&statex2, seed, nonce0, nonce1);
+    shake256x2_squeezeblocks(buf0, buf1, POLY_UNIFORM_ETA_NBLOCKS, &statex2);
+
+    ctr0 = rej_eta(a0->coeffs, N, buf0, buflen);
+    ctr1 = rej_eta(a1->coeffs, N, buf1, buflen);
+
+    while (ctr0 < N || ctr1 < N) {
+        shake256x2_squeezeblocks(buf0, buf1, 1, &statex2);
+        ctr0 += rej_eta(a0->coeffs + ctr0, N - ctr0, buf0, STREAM256_BLOCKBYTES);
+        ctr1 += rej_eta(a1->coeffs + ctr1, N - ctr1, buf1, STREAM256_BLOCKBYTES);
+    }
+}
 
 /*************************************************
 * Name:        poly_uniform_gamma1m1
@@ -476,6 +545,22 @@ void poly_uniform_gamma1(poly *a,
   polyz_unpack(a, buf);
 }
 
+void poly_uniform_gamma1x2(poly *a0, poly *a1,
+                           const uint8_t seed[CRHBYTES],
+                           uint16_t nonce0, uint16_t nonce1) {
+
+    uint8_t buf0[POLY_UNIFORM_GAMMA1_NBLOCKS * STREAM256_BLOCKBYTES];
+    uint8_t buf1[POLY_UNIFORM_GAMMA1_NBLOCKS * STREAM256_BLOCKBYTES];
+
+    keccakx2_state statex2;
+
+    dilithium_shake256x2_stream_init(&statex2, seed, nonce0, nonce1);
+    shake256x2_squeezeblocks(buf0, buf1, POLY_UNIFORM_GAMMA1_NBLOCKS, &statex2);
+
+    polyz_unpack(a0, buf0);
+    polyz_unpack(a1, buf1);
+
+}
 /*************************************************
 * Name:        challenge
 *

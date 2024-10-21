@@ -3,7 +3,7 @@
 #include <cstring>
 #include <cstdint>
 
-void NTT(uint64_t *a);
-void INTT(uint64_t *a);
+void NTT(int32_t *a);
+void iNTT(int64_t *a);
 
 #endif
