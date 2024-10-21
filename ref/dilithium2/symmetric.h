@@ -5,6 +5,7 @@
 #include "params.h"
 
 #include "fips202.h"
+#include "fips202x2.h"
 
 typedef keccak_state stream128_state;
 typedef keccak_state stream256_state;
@@ -26,6 +27,16 @@ void dilithium_shake256_stream_init(keccak_state *state,
         dilithium_shake128_stream_init(STATE, SEED, NONCE)
 #define stream128_squeezeblocks(OUT, OUTBLOCKS, STATE) \
         shake128_squeezeblocks(OUT, OUTBLOCKS, STATE)
+
+#define dilithium_shake128x2_stream_init DILITHIUM_NAMESPACE(dilithium_shake128x2_stream_init)
+void dilithium_shake128x2_stream_init(keccakx2_state *state,
+                                      const uint8_t seed[SEEDBYTES],
+                                      uint16_t nonce1, uint16_t nonce2);
+#define dilithium_shake256x2_stream_init DILITHIUM_NAMESPACE(dilithium_shake256x2_stream_init)
+void dilithium_shake256x2_stream_init(keccakx2_state *state,
+                                      const uint8_t seed[CRHBYTES],
+                                      uint16_t nonce1, uint16_t nonce2);
+
 #define stream256_init(STATE, SEED, NONCE) \
         dilithium_shake256_stream_init(STATE, SEED, NONCE)
 #define stream256_squeezeblocks(OUT, OUTBLOCKS, STATE) \

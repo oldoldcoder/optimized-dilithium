@@ -6,7 +6,7 @@
 #include "params.h"
 
 typedef struct {
-  int32_t coeffs[N];
+    int32_t coeffs[N];
 } poly;
 
 #define poly_reduce DILITHIUM_NAMESPACE(poly_reduce)
@@ -43,14 +43,27 @@ int poly_chknorm(const poly *a, int32_t B);
 void poly_uniform(poly *a,
                   const uint8_t seed[SEEDBYTES],
                   uint16_t nonce);
+#define poly_uniformx2 DILITHIUM_NAMESPACE(poly_uniformx2)
+void poly_uniformx2(poly *a0, poly *a1,
+                    const uint8_t seed[SEEDBYTES],
+                    uint16_t nonce0, uint16_t nonce1);
 #define poly_uniform_eta DILITHIUM_NAMESPACE(poly_uniform_eta)
 void poly_uniform_eta(poly *a,
                       const uint8_t seed[CRHBYTES],
                       uint16_t nonce);
+#define poly_uniform_etax2 DILITHIUM_NAMESPACE(poly_uniform_etax2)
+void poly_uniform_etax2(poly *a0, poly *a1,
+                        const uint8_t seed[CRHBYTES],
+                        uint16_t nonce0, uint16_t nonce1);
 #define poly_uniform_gamma1 DILITHIUM_NAMESPACE(poly_uniform_gamma1)
 void poly_uniform_gamma1(poly *a,
                          const uint8_t seed[CRHBYTES],
                          uint16_t nonce);
+#define poly_uniform_gamma1x2 DILITHIUM_NAMESPACE(poly_uniform_gamma1x2)
+void poly_uniform_gamma1x2(poly *a0, poly *a1,
+                           const uint8_t seed[CRHBYTES],
+                           uint16_t nonce0, uint16_t nonce1);
+
 #define poly_challenge DILITHIUM_NAMESPACE(poly_challenge)
 void poly_challenge(poly *c, const uint8_t seed[CTILDEBYTES]);
 

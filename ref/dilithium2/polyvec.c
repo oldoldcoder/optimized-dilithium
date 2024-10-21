@@ -2,6 +2,10 @@
 #include "params.h"
 #include "polyvec.h"
 #include "poly.h"
+#include "stdio.h"
+#include "hal.h"
+
+#define X2 0
 
 /*************************************************
 * Name:        expand_mat
@@ -15,10 +19,21 @@
 **************************************************/
 void polyvec_matrix_expand(polyvecl mat[K], const uint8_t rho[SEEDBYTES]) {
   unsigned int i, j;
-
+#if X2
+    uint64_t start = hal_get_time();
+    for(i = 0; i < K; ++i)
+        for(j = 0; j < L; j+=2){
+            poly_uniformx2(&mat[i].vec[j],&mat[i].vec[j + 1], rho, (i << 8) + j,(i << 8) + (j + 1));
+        }
+    uint64_t end = hal_get_time();
+    uint64_t res = end - start;
+    printf("\n poly_uniformx2: %ld",res);
+    fflush(stdout);
+#else
   for(i = 0; i < K; ++i)
     for(j = 0; j < L; ++j)
       poly_uniform(&mat[i].vec[j], rho, (i << 8) + j);
+#endif
 }
 
 void polyvec_matrix_pointwise_montgomery(polyveck *t, const polyvecl mat[K], const polyvecl *v) {
@@ -34,16 +49,40 @@ void polyvec_matrix_pointwise_montgomery(polyveck *t, const polyvecl mat[K], con
 
 void polyvecl_uniform_eta(polyvecl *v, const uint8_t seed[CRHBYTES], uint16_t nonce) {
   unsigned int i;
-
+#if X2
+    // TODO 统计时间
+    uint64_t start = hal_get_time();
+    for(i = 0; i < L; i+=2){
+        poly_uniform_etax2(&v->vec[i],&v->vec[i+1], seed, nonce,nonce+1);
+        nonce += 2;
+    }
+    uint64_t end = hal_get_time();
+    uint64_t res = end - start;
+    printf("\n poly_uniform_etax2: %ld",res);
+    fflush(stdout);
+#else
   for(i = 0; i < L; ++i)
     poly_uniform_eta(&v->vec[i], seed, nonce++);
+#endif
 }
 
 void polyvecl_uniform_gamma1(polyvecl *v, const uint8_t seed[CRHBYTES], uint16_t nonce) {
   unsigned int i;
-
+#if X2
+    // TODO 统计时间
+    uint64_t start = hal_get_time();
+    for(i = 0; i < L; i+=2){
+        poly_uniform_gamma1x2(&v->vec[i],&v->vec[i+1], seed, nonce,nonce+1);
+        nonce += 2;
+    }
+    uint64_t end = hal_get_time();
+    uint64_t res = end - start;
+    printf("\n poly_uniform_gamma1x2: %ld",res);
+    fflush(stdout);
+#else
   for(i = 0; i < L; ++i)
     poly_uniform_gamma1(&v->vec[i], seed, L*nonce + i);
+#endif
 }
 
 void polyvecl_reduce(polyvecl *v) {
@@ -152,9 +191,21 @@ int polyvecl_chknorm(const polyvecl *v, int32_t bound)  {
 
 void polyveck_uniform_eta(polyveck *v, const uint8_t seed[CRHBYTES], uint16_t nonce) {
   unsigned int i;
-
+#if X2
+    // TODO 统计时间
+    uint64_t start = hal_get_time();
+    for(i = 0; i < K; i+=2){
+        poly_uniform_etax2(&v->vec[i],&v->vec[i+1], seed, nonce,nonce+1);
+        nonce += 2;
+    }
+    uint64_t end = hal_get_time();
+    uint64_t res = end - start;
+    printf("\n poly_uniform_etax2: %ld",res);
+    fflush(stdout);
+#else
   for(i = 0; i < K; ++i)
     poly_uniform_eta(&v->vec[i], seed, nonce++);
+#endif
 }
 
 /*************************************************
